@@ -54,6 +54,6 @@ def txt2csv(referenceRawPointFile, dist_dir):
         os.makedirs(dist_dir)
     txt.to_csv(dist_file_path, index=False, encoding='utf-8')
 
-txt_rootdir = ".\\data_source\\raw_data"
+txt_rootdir = ".\\data_source\\new_txt"
 csv_rootdir = ".\\data_source\\csv_data"
 loadAllTxt2Csv(txt_rootdir, csv_rootdir)

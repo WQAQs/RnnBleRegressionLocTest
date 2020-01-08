@@ -10,13 +10,13 @@ import globalConfig
 在 m 个timestamp后输出定位结果（x，y 坐标）
 '''
 
-Sample_Dataset_File = '.\\rnn_sample_set_4days.csv'
+Sample_Dataset_File = '.\\rnn_sample_set_onehot_test2.csv'
 # set hyperameters
 output_size = 2
-n_epochs = 1000
-hidden_dim = 12  # it's up to you
+n_epochs = 200
+hidden_dim = 32  # it's up to you
 time_stamps = globalConfig.n_timestamps
-n_layers = 10  # it's up to you
+n_layers = 4  # it's up to you
 lr = 0.01
 
 class Model(nn.Module):
@@ -78,6 +78,7 @@ def divide_sample_dataset(sample_dataset_file):
     return train_dataset, test_dataset
 
 def load_dataset(dataset):
+
     reference_tag = dataset.values[:, 0]
     data_input = dataset.values[:,5:] #包括index=5
     # data_input = data_input.reshape(data_input.shape[0],data_input.shape[1],1)
@@ -87,6 +88,7 @@ def load_dataset(dataset):
 def load_data(data_file):
     dataset = pd.read_csv(data_file)
     data_input , coordinates, reference_tag = load_dataset(dataset)
+    coordinates = coordinates.astype(float)
     return data_input,coordinates,reference_tag
 
 
@@ -101,7 +103,21 @@ train_data_input, train_data_target,train_reference_tag = load_data(Sample_Datas
 n_ibeacons = train_data_input.shape[1]
 time_stamps = n_ibeacons
 n = train_data_input.shape[0]
-input_seqs = train_data_input.reshape(n, time_stamps, 1)
+t = train_data_input[0][0]
+
+input_list = []
+for item in train_data_input:
+    one_sample = []
+    for index in range(train_data_input.shape[1]):
+        temp = item[index]
+        t1 = temp.split(',')
+        t2 = [float(i) for i in t1]
+        one_sample.append(t2)
+    input_list.append(one_sample)
+onehot_dim = len(input_list[0][0])
+input_array = np.asarray(input_list)
+# input_seqs = input_array.reshape(n, time_stamps, onehot_dim)
+input_seqs = input_array
 target_seqs = train_data_target
 
 
@@ -111,7 +127,7 @@ input_seqs,target_seqs = input_seqs.type(torch.float32),target_seqs.type(torch.f
 
 
 # get hyperparameters' value
-input_size = 1
+input_size = onehot_dim
 
 
 # Instantiate the model with hyperparameters
@@ -119,7 +135,7 @@ model = Model(input_size=input_size, output_size=output_size, hidden_dim=hidden_
 # We'll also set the model to the device that we defined earlier (default is CPU)
 model.to(cuda0)
 criterion = nn.MSELoss()
-criterion = nn.L1Loss()
+# criterion = nn.L1Loss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
 

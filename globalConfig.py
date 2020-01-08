@@ -32,7 +32,7 @@ sampleDataSetFilePath = '.\\sample_train.csv'
 # 模型超参数设置
 
 
-n_timestamps = 50
+n_timestamps = 10
 base_dir = ".\\format_data\\"
 full_path = base_dir+data_name
 model_path = base_dir+"example"

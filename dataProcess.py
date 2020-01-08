@@ -4,7 +4,10 @@ import os
 import time
 import shutil
 import globalConfig
-
+from numpy import array
+from numpy import argmax
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
 
 # 样品数据集目标路径，可以设置为训练集或测试集
 sampleDataSetFilePath = '.\\sample_train.csv'
@@ -19,6 +22,8 @@ stableCount = globalConfig.stableCount  # 维度设置，暂时改为直接确�
 ibeacon_column_tags = ["scan_index", "count", "mac", "uuid", ]  # ibeacon列标签
 ibeacon_dataset = pd.DataFrame(columns=ibeacon_column_tags)
 out_file_created = os.path.exists(sampleDataSetFilePath)  # 标记目标文件是否已创建
+valid_ibeacon_file = "valid_ibeacon_mac.csv"
+
 
 def loadAllTxt2Csv(txt_rootdir, csv_rootdir):
 
@@ -258,6 +263,52 @@ def config_coordinate(reference_tag):
     y = df['coordinate_y'].values
     return x[0], y[0]  # 所以后面用到它们的值要返回 x[0] y[0]
 
+def one_hot(data):
+    # define example
+    values = array(data)
+    # integer encode
+    label_encoder = LabelEncoder()
+    integer_encoded = label_encoder.fit_transform(values)
+    # binary encode
+    onehot_encoder = OneHotEncoder(sparse=False)
+    integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
+    onehot_encoded = onehot_encoder.fit_transform(integer_encoded)
+    # invert first example
+    inverted = label_encoder.inverse_transform([argmax(onehot_encoded[0, :])])
+    return onehot_encoded
+
+def get_one_hot(mac_value, onehot_mac_dic):
+    if mac_value in onehot_mac_dic:
+        onehot_mac = onehot_mac_dic[mac_value]
+        return onehot_mac
+    else:
+        return None
+
+def get_onehot(mac_value):
+    global valid_ibeacon_file
+    onehot_mac_dic = {}
+    ibeacon_csv = pd.read_csv(valid_ibeacon_file)
+    mac_df = ibeacon_csv.mac
+    mac_array = np.asarray(mac_df)
+    # integer encode
+    label_encoder = LabelEncoder()
+    integer_encoded = label_encoder.fit_transform(mac_array)
+    # binary encode
+    onehot_encoder = OneHotEncoder(sparse=False)
+    integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
+    onehot_encoded = onehot_encoder.fit_transform(integer_encoded)
+    for i in range(mac_array.shape[0]):
+        onehot_mac_dic[mac_array[i]] = onehot_encoded[i]
+    if mac_value in onehot_mac_dic:
+        onehot_mac = onehot_mac_dic[mac_value]
+        str_onehot = ""
+        for i in onehot_mac:
+            str_onehot = str_onehot + str(i)+","
+        result =str_onehot.rstrip(",")
+        return result
+    else:
+        return None
+
 def csv2sample_data(referencePoint_csv, reference_tag, coordinate_x, coordinate_y, cluster_tag,direction_tag,column_tags):
     n_timestamps = globalConfig.n_timestamps
     begin_time = referencePoint_csv.iloc[0][0]  # 分段的开始时间
@@ -266,23 +317,27 @@ def csv2sample_data(referencePoint_csv, reference_tag, coordinate_x, coordinate_
     one_sample = [0] * len(column_tags)  # 记录每个rssi的和\
     count = 5  # rssi从列的index=5开始
     for row in referencePoint_csv.itertuples():
-        one_sample[count] = row.rssi
-        count += 1
-        if count == len(column_tags):
-            one_sample[0] = reference_tag
-            one_sample[1] = coordinate_x
-            one_sample[2] = coordinate_y
-            one_sample[3] = cluster_tag
-            one_sample[4] = direction_tag
-            all_samples.append(one_sample)
-            count = 5
+        onehot_mac = get_onehot(row.mac)
+        if onehot_mac is None:
+            continue
+        else:
+            # rssi = array(row.rssi)
+            # mac_rssi = np.hstack((onehot_mac, rssi))
+            mac_rssi = onehot_mac + "," + str(row.rssi)
+            one_sample[count] = mac_rssi
+            count += 1
+            if count == len(column_tags):
+                one_sample[0] = reference_tag
+                one_sample[1] = coordinate_x
+                one_sample[2] = coordinate_y
+                one_sample[3] = cluster_tag
+                one_sample[4] = direction_tag
+                all_samples.append(one_sample)
+                count = 5
     samples_dataset = pd.DataFrame(all_samples, columns=column_tags)
+    temp = samples_dataset.values[:, 5:]
+    n1t1 = temp[0][0]
     return samples_dataset
-
-
-
-
-
 
 def loadAllCsvFile2SampleSet(csv_rootdir, column_tags):
     """
@@ -320,7 +375,7 @@ def loadAllCsvFile2SampleSet(csv_rootdir, column_tags):
             # samples_dataset = sliceAndAverage(csv, cluster_tag, "0", column_tags, samples_dataset)
             samples_dataset = csv2sample_data(csv, reference_tag, coordinate_x, coordinate_y, cluster_tag, direction_tag, column_tags)
             if out_file_created:
-                samples_dataset.to_csv(sampleDataSetFilePath, index=False, encoding='utf-8', header=False, mode="a")
+                samples_dataset.to_csv(sampleDataSetFilePath, index=False, encoding='utf-8', header=False, mode="a") #接着在文件末尾添加数据，即以append方式写数据
             else:
                 samples_dataset.to_csv(sampleDataSetFilePath, index=False, encoding='utf-8')
                 out_file_created = True
@@ -329,6 +384,16 @@ def loadAllCsvFile2SampleSet(csv_rootdir, column_tags):
     print(samples_dataset)
     print('samples_count:')
     print(samples_dataset.shape[0])
+
+
+
+# res = get_one_hot("6C:EC:EB:1F:F8:E8")
+# res
+# data = ['cold', 'cold', 'warm', 'cold', 'hot', 'hot', 'warm', 'cold', 'warm', 'hot']
+# res = one_hot(data)
+# res
+
+
 
 
 

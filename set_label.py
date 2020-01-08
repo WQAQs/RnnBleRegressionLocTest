@@ -6,8 +6,8 @@ point_label_map = {'1':0, '2':1, '3':2, '4':3, '5':4, '6':5,
                    '7':6, '8':7, '9':8, '10':9, '11':10, '12':11,
                    '13':12, '14':13, '15':14, '16':15, "17":16, '18':17,
                    '19':18, '20':19, '21':20}
-labeld_root_dir = ".\\data_source\\labeld"
-source_root_dir = ".\\data_source\\csv_data"
+labeld_root_dir = ".\\format_data\\rnn_test2\\new_labeld"
+source_root_dir = ".\\format_data\\rnn_test2\\new_csv"
 
 def lable_data(source_root_dir, labeled_root_dir):
     timed_dirs = os.listdir(source_root_dir)
