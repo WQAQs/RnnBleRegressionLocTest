@@ -1,0 +1,6 @@
+
+best_model_dir : \experiment_records\1_8points_10days\500ms\2_best
+retrain_pre_model: .\experiment_records\1_8points_4days\500ms\retrain_3_not_uniformed_1\model1_1_8points_4days_500ms_01_15_105042.pth
+current_model_file : model1_1_8points_10days_500ms_01_15_114509.pth
+evaluate dataset : valid_dataset1_8points_10days_500ms.csv
+model valid Loss = 0.21111100912094116

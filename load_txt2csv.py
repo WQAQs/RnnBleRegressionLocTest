@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import globalConfig
 
 def loadAllTxt2Csv(txt_rootdir, csv_rootdir):
 
@@ -54,6 +55,6 @@ def txt2csv(referenceRawPointFile, dist_dir):
         os.makedirs(dist_dir)
     txt.to_csv(dist_file_path, index=False, encoding='utf-8')
 
-txt_rootdir = ".\\data_source\\new_txt"
-csv_rootdir = ".\\data_source\\csv_data"
+txt_rootdir = globalConfig.all_raw_txt_data_dir
+csv_rootdir = globalConfig.all_unlabeled_csv_dir
 loadAllTxt2Csv(txt_rootdir, csv_rootdir)

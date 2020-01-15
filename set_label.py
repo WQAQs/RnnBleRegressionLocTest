@@ -1,13 +1,14 @@
 import os
 import pandas as pd
 import shutil
+import globalConfig
 
 point_label_map = {'1':0, '2':1, '3':2, '4':3, '5':4, '6':5,
                    '7':6, '8':7, '9':8, '10':9, '11':10, '12':11,
                    '13':12, '14':13, '15':14, '16':15, "17":16, '18':17,
                    '19':18, '20':19, '21':20}
-labeld_root_dir = ".\\format_data\\rnn_test2\\new_labeld"
-source_root_dir = ".\\format_data\\rnn_test2\\new_csv"
+labeld_csv_root_dir = globalConfig.all_labeled_csv_dir
+unlabeled_csv_root_dir = globalConfig.all_unlabeled_csv_dir
 
 def lable_data(source_root_dir, labeled_root_dir):
     timed_dirs = os.listdir(source_root_dir)
@@ -16,7 +17,7 @@ def lable_data(source_root_dir, labeled_root_dir):
         csv_files = os.listdir(timed_path)
         for csv_file in csv_files:
             csv_file_path = os.path.join(timed_path, csv_file)
-            lable_a_csv(csv_file_path,labeld_root_dir)
+            lable_a_csv(csv_file_path, labeld_csv_root_dir)
 
 def lable_a_csv(csv_file_path, labeled_root_dir):
     csv_name = csv_file_path.split("\\")[-1]  # 获取不带路径的txt文件名
@@ -28,4 +29,4 @@ def lable_a_csv(csv_file_path, labeled_root_dir):
         os.makedirs(new_dir)
     shutil.copyfile(csv_file_path, new_file_path)
 
-lable_data(source_root_dir, labeld_root_dir)
+lable_data(unlabeled_csv_root_dir, labeld_csv_root_dir)    # csv文件名字对应参考点的tag，csv文件的父文件夹名对应参考点的类tag

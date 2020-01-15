@@ -1,0 +1,2 @@
+best model dir: retrain_3_not_uniformed_1
+model valid Loss = 0.2603459358215332
