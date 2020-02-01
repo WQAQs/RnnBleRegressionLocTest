@@ -57,4 +57,8 @@ def txt2csv(referenceRawPointFile, dist_dir):
 
 txt_rootdir = globalConfig.all_raw_txt_data_dir
 csv_rootdir = globalConfig.all_unlabeled_csv_dir
+
+# txt_rootdir = globalConfig.root_data_dir + "\\test_code_data\\unlabeled_txt"
+# csv_rootdir = globalConfig.root_data_dir + "\\test_code_data\\unlabeled_csv"
+
 loadAllTxt2Csv(txt_rootdir, csv_rootdir)

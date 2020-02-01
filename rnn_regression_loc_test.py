@@ -17,12 +17,11 @@ import time
 每个timestamp输入采集到的一个ibeacon强度值
 在 m 个timestamp后输出定位结果（x，y 坐标）
 '''
-
  # 文件目录
-Sample_Dataset_File = globalConfig.sample_dataset_file  # 模型使用的样本集文件
-train_dataset_file = globalConfig.train_dataset_file
-valid_dataset_file = globalConfig.valid_dataset_file
-test_dataset_file = globalConfig.test_datset_file
+Sample_Dataset_File = globalConfig.model_sample_dataset_file  # 模型使用的样本集文件
+train_dataset_file = globalConfig.model_train_dataset_file
+valid_dataset_file = globalConfig.model_valid_dataset_file
+test_dataset_file = globalConfig.model_test_dataset_file
 pre_network_model_file = globalConfig.pre_network_model_file
 original_saved_model_file = globalConfig.save_network_model_file
 current_saved_model_file = ""
@@ -316,7 +315,7 @@ def clear_dir(root_path):
 
 
 def my_evaluate_model(model_file, dataset_file):
-    clear_dir(globalConfig.experiment_running_results_dir)  # 清空experiment_running_results_dir文件夹的内容
+
     data_input, data_target, reference_tag, batch_loader = initialize_data(dataset_file)  # 准备评估模型用的数据
 
     current_model = torch.load(model_file)  # 加载待评估的模型
@@ -326,9 +325,9 @@ def my_evaluate_model(model_file, dataset_file):
         retrain_msg = "retrain_pre_model: " + globalConfig.pre_network_model_file + "\n"
     # 保存实验说明文件experiment_readme.txt
     loss = criterion(pred_result, data_target)
-    loss_msg = "model valid Loss = " + str(loss.item()) + "\n"
+    loss_msg = "model test Loss = " + str(loss.item()) + "\n"
     dataset_file_name = dataset_file.split("\\")[-1]  # 获取不带路径的文件名
-    evaluate_dataset_msg = "evaluate dataset : " + dataset_file_name + "\n"
+    evaluate_dataset_msg = "test dataset : " + dataset_file_name + "\n"
     model_file_name = model_file  # 获取不带路径的文件名
     evaluate_model_msg = "current_model_file : " + model_file_name + "\n"
     train_dataset_file_name = "train_model_file : " + train_dataset_file.split("\\")[-1] + "\n"
@@ -398,6 +397,11 @@ def cdf(data):
         hist[i] = hist[i]+hist[i-1]
     hist = hist/len(data)
     plt.figure()
+    # 设置坐标轴刻度
+    my_x_ticks = np.arange(0, 10, 1)
+    my_y_ticks = np.arange(0, 1.1, 0.1)
+    plt.xticks(my_x_ticks)
+    plt.yticks(my_y_ticks)
     plt.title("Prediction Distance Error CDF")
     plt.xlabel('Prediction Distance Error (/m)')
     plt.ylabel('CDF')
@@ -430,7 +434,7 @@ def run_experiment(repeat=10):
     global min_loss
     global best_train_pred
     global criterion
-
+    clear_dir(globalConfig.experiment_running_results_dir)  # 清空experiment_running_results_dir文件夹的内容
     for i in range(repeat):
         print("\n" + "repeat = " + str(i) + "\n")
         if retrain_model_flag:
@@ -474,8 +478,8 @@ if __name__ == '__main__':
     valid_input, valid_coordinates, \
     valid_reference_tag, valid_batch_loader = initialize_data(valid_dataset_file)  # 加载和预处理验证集数据
 
-    # run_experiment(globalConfig.model_repeat)  # 训练模型
-    valid_dataset_file = globalConfig.sample_dataset_file
-    my_evaluate_model(evaluate_model_file, valid_dataset_file)  # 评估模型
+    run_experiment(globalConfig.model_repeat)  # 训练模型
+    # valid_dataset_file = globalConfig.sample_dataset_file
+    my_evaluate_model(evaluate_model_file, test_dataset_file)  # 评估模型
 
 

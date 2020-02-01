@@ -9,7 +9,7 @@ timeInterval = 500  # 一个样本的时间，单位ms，即定位的时间间�
 ####### 文件目录设置  ########
 root_data_dir = ".\\data"
 point_range = "1_8points"
-n_days = "1days"
+n_days = "7days"
 time_interval = str(timeInterval) + "ms"
 resource_data_dir = root_data_dir + "\\resource_data"
 all_raw_txt_data_dir = resource_data_dir + "\\all_raw_txt_data"
@@ -29,7 +29,7 @@ sampleset_dir = root_data_dir + "\\sampleset_data"
 sample_dataset_file = sampleset_dir + "\\onehot_sampleset" + point_range + "_" + n_days + "_" + time_interval + ".csv"  # 保存样本数据集的文件
 train_dataset_file = sampleset_dir + "\\train_dataset" + point_range + "_" + n_days + "_" + time_interval + ".csv"  # 保存训练集的文件
 valid_dataset_file = sampleset_dir + "\\valid_dataset" + point_range + "_" + n_days + "_" + time_interval + ".csv"  # 保存验证集的文件
-test_datset_file = sampleset_dir + "\\test_dataset_file.csv"  # 保存测试集的文件
+# test_datset_file = testset_dir + "\\1_8points_7days_500ms\\onehot_sampleset1_8points_7days_500ms.csv"  # 保存测试集的文件
 
 
 ##################################
@@ -39,12 +39,14 @@ model_repeat = 10  # 每一次run_experiment中训练出几个model
 ######## model的设置 #########
 n_epochs = 100
 hidden_dim = 12
-batch_size = 256
+batch_size = 2048*16
 n_layers = 1
 lr = 0.005
 earlystop_patience = 5
 wordvec_uniform_flag = True
+###### 再训练模型的标志 ######
 retrain_model_flag = True
+
 
 train_model_hyperparameter_msg = "train_model_hyperparameter :" + "\n" \
                                  + "n_epochs = " + str(n_epochs) + "\n" \
@@ -55,12 +57,21 @@ train_model_hyperparameter_msg = "train_model_hyperparameter :" + "\n" \
                                  + "earlystop_patience = " + str(earlystop_patience) + "\n"
 # n_timestamps = 10  # 模型超参数设置 目前没用到
 # wordvec_file = ".\\wordvec_file.csv"  # 存储词向量的文件，目前没用到
+####### 训练 验证 测试 model 使用的数据 #######
+trainset_dir = sampleset_dir + "\\train"
+testset_dir = sampleset_dir + "\\test"
+model_sample_dataset_file = trainset_dir + "\\1_8points_33days_500ms\\onehot_sampleset1_8points_33days_500ms.csv"
+model_train_dataset_file = trainset_dir + "\\1_8points_33days_500ms\\train_dataset1_8points_33days_500ms.csv"  # model训练集
+model_valid_dataset_file = trainset_dir + "\\1_8points_33days_500ms\\valid_dataset1_8points_33days_500ms.csv"  # model验证集
+model_test_dataset_file = testset_dir + "\\1_8points_7days_500ms\\onehot_sampleset1_8points_7days_500ms.csv"  # model测试集
 ###### 保存实验结果的目录设置  ######
 experiment_running_results_dir = ".\\experiment_running_results"
 experiment_records_dir = ".\\experiment_records"
-pre_network_model_file = experiment_records_dir \
-                         + "\\1_8points_4days\\500ms" \
-                           "\\retrain_3_not_uniformed_1\\model1_1_8points_4days_500ms_01_15_105042.pth"  # 之前训练出的网络模型文件
+# pre_network_model_file = experiment_records_dir \
+#                          + "\\1_8points_4days\\500ms" \
+#                            "\\retrain_3_not_uniformed_1\\model1_1_8points_4days_500ms_01_15_105042.pth"  # 之前训练出的网络模型文件
+pre_network_model_file = experiment_records_dir + "\\best_model\\model1_1_8points_4days_500ms_01_15_105042.pth"
+
 evaluate_model_file = experiment_records_dir + "\\1_8points_10days\\500ms\\2_best" + \
                       "\\model1_1_8points_10days_500ms_01_15_114509.pth"
 save_network_model_file = experiment_running_results_dir + "\\model1_" \
