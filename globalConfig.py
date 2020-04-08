@@ -8,8 +8,8 @@ import os
 timeInterval = 500  # 一个样本的时间，单位ms，即定位的时间间隔
 ####### 文件目录设置  ########
 root_data_dir = ".\\data"
-point_range = "1_8points"
-n_days = "7days"
+point_range = "1_20points"
+n_days = "1days"
 time_interval = str(timeInterval) + "ms"
 resource_data_dir = root_data_dir + "\\resource_data"
 all_raw_txt_data_dir = resource_data_dir + "\\all_raw_txt_data"
@@ -20,15 +20,19 @@ root_csv_dir = resource_data_dir + "\\points_csv\\train"  # 转换的csv文件�
 ibeaconFilePath = resource_data_dir + "\\ibeacon_mac_count_day1217.csv"  # ibeacon 统计文件
 ##### 生成样本集使用的数据来源 #######
 # all_labeled_csv_root_dir = root_data_dir + ".\\labeled_csv_data"
-generate_sampleset_all_labeled_csv_dir = resource_data_dir + "\\generate_sampleset_all_labeled_csv"  # 用来做样本集的数据文件夹
-all_labeled_csv_dir = resource_data_dir + ".\\all_labeled_csv"  # 用来做样本集的数据文件夹
+generate_sampleset_all_labeled_csv_dir = resource_data_dir + "\\generate_sampleset_all_labeled_csv"  # 用来做样本集的已标记数据文件夹
+all_labeled_csv_dir = resource_data_dir + ".\\all_labeled_csv"  # set_label后保存的目标文件夹
 reference_points_coordinates_file = resource_data_dir + "\\sacura_reference_points_coordinates.csv"  # 参考点坐标文件
 valid_ibeacon_file = resource_data_dir + "\\valid_ibeacon_mac.csv"  # 部署的有效ibeacon文件
 ##### 生成的样本集保存的位置 ######
-sampleset_dir = root_data_dir + "\\sampleset_data"
-sample_dataset_file = sampleset_dir + "\\onehot_sampleset" + point_range + "_" + n_days + "_" + time_interval + ".csv"  # 保存样本数据集的文件
-train_dataset_file = sampleset_dir + "\\train_dataset" + point_range + "_" + n_days + "_" + time_interval + ".csv"  # 保存训练集的文件
-valid_dataset_file = sampleset_dir + "\\valid_dataset" + point_range + "_" + n_days + "_" + time_interval + ".csv"  # 保存验证集的文件
+sampleset_dir = root_data_dir + "\\sampleset_data"  #保存生成的样本集的文件夹
+# sample_dataset_file = sampleset_dir + "\\onehot_sampleset" + point_range + "_" + n_days + "_" + time_interval + ".csv"  # 保存样本数据集的文件
+# train_dataset_file = sampleset_dir + "\\train_dataset" + point_range + "_" + n_days + "_" + time_interval + ".csv"  # 保存训练集的文件
+# valid_dataset_file = sampleset_dir + "\\valid_dataset" + point_range + "_" + n_days + "_" + time_interval + ".csv"  # 保存验证集的文件
+
+sample_dataset_file = sampleset_dir + "\\sampleset_day20-1-8_points20_average_interval_500ms.csv"  # 保存样本数据集的文件
+train_dataset_file = sampleset_dir + "\\train_dataset1.csv"  # 保存训练集的文件
+valid_dataset_file = sampleset_dir + "\\valid_dataset1.csv"  # 保存验证集的文件
 # test_datset_file = testset_dir + "\\1_8points_7days_500ms\\onehot_sampleset1_8points_7days_500ms.csv"  # 保存测试集的文件
 
 

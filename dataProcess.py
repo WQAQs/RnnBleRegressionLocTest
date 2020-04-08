@@ -137,8 +137,8 @@ def createSampleDataSet(pointCsvRootDir, shuffle_flag=True):
         ibeacon统计表文件路径
     :return:
     """
-    # ibeacon_csv = pd.read_csv(ibeaconFilePath)
-    column_tags = configColumnTags()
+    ibeacon_csv = pd.read_csv(globalConfig.valid_ibeacon_file)
+    column_tags = configColumnTags(onehot_flag=False,valid_ibeacon_csv=ibeacon_csv)
     loadAllCsvFile2SampleSet(pointCsvRootDir, column_tags)
     dataset = pd.read_csv(globalConfig.sample_dataset_file)
     shuffled_dataset = shuffle(dataset)
@@ -169,27 +169,23 @@ def updateIbeaconDataSet(point_data):
             index = macDF.index.values[0]
             ibeacon_dataset.loc[index:index, 'count'] = macDF['count'] + mac_count
 
-
-def configColumnTags():
+def configColumnTags(onehot_flag,valid_ibeacon_csv):
     """
     确定样本集维度标签的方法
     :param ibeacon_csv: DataFrame or TextParser
     ibeacon
     :return: list<string>
     """
-    column_tags = ["reference_tag", "coordinate_x", "coordinate_y", "cluster_tag", "direction_tag", "onehotmac_rssi_sentence"]
-    # for i in range(globalConfig.n_timestamps):
-    #     column_tags.append("rssi")
-    # column_tags = ["reference_tag", "coordinate_x", "coordinate_y", "cluster_tag", "direction_tag"]
-    # for index, row in ibeacon_csv.iterrows():
-    #     if index >= stableCount:  # 若该行的mac出现次数小于阈值则不计入维度
-    #         break
-    #     #tag = "mac%drssi" % index
-    #     tag = row["mac"]  # 这里改为直接使用mac地址作为维度标签以减少使用ibeacon统计表的次数
-    #     column_tags.append(tag)
-    # columns_count = len(column_tags)  # 加上 参考的标签 和 采样方向 两列
-    # print("colums_count:{}".format(columns_count))
+    if onehot_flag:
+        column_tags = ["reference_tag", "coordinate_x", "coordinate_y", "cluster_tag", "direction_tag", "onehotmac_rssi_sentence"]
+    else:
+        column_tags = ["reference_tag", "coordinate_x", "coordinate_y", "cluster_tag", "direction_tag"]
+        for index, row in valid_ibeacon_csv.iterrows():
+            tag = row["mac"]  # 这里改为直接使用mac地址作为维度标签以减少使用ibeacon统计表的次数
+            column_tags.append(tag)
     return column_tags
+
+
 
 
 def txt2csv(referenceRawPointFile, dist_dir):
@@ -267,6 +263,57 @@ def deprecated_sliceAndAverage(referencePoint_csv, reference_tag, cluster_tag, d
         i = j  # 更新 i 的值，让它指向下一秒的数据起点
     return samples_dataset
 
+def sliceAndAverage(referencePoint_csv,column_tags,reference_tag, cluster_tag, direction_tag, coordinate_x,coordinate_y):
+    """
+    将数据按设定的时间片分割并求平均的方法
+    :param referencePoint_csv: DataFrame
+        读取的待处理数据
+    :param ibeacon_csv: DataFrame
+        ibeacon统计表数据
+    :param reference_tag: string
+        类型标签
+    :param direction_tag: string
+        方向标签
+    :param column_tags: list<string>
+        维度标签
+    :return: number
+        返回生成的数据条数
+    """
+    i = 0
+    j = 0
+    # 访问csv文件的每一行的数据，每一个循环里处理 1s 的数据，
+    # 每轮循环结束更新 i 的值时，注意要让它指向下一秒的数据起点
+    rownum = referencePoint_csv.shape[0]  # 取数据行数
+    all_samples = []
+    tag_map = {}
+    for idx in range(len(column_tags)):  # 使用dict提高查找下标的速度
+        tag_map[column_tags[idx]] = idx
+    while i < rownum:
+        one_sample = [initVal for i in range(len(column_tags))]  # 用固定值（-128）初始化列表
+        time_col = referencePoint_csv['time']
+        while j < rownum and time_col[j] < time_col[i] + timeInterval:
+            j += 1
+        if j >= rownum:  # 移除文件末尾不足一秒的数据
+            break
+        # 同一 mac 地址出现多次，则对多次的 rssi 求平均
+        groupby_data = referencePoint_csv.iloc[i: j].groupby(['mac'])  # 按照mac进行分类
+        for mac_value, group_data in groupby_data:
+            tag_idx = tag_map.get(mac_value, -1)
+            if tag_idx > -1:
+                rrsi_mean = group_data['rssi'].mean()
+                one_sample[tag_idx] = rrsi_mean
+        ####  参考点标签 和  采样方向标签  赋值给 macs_rssi[index] #####
+        # column_tags 前5列分别是："reference_tag", "coordinate_x", "coordinate_y", "cluster_tag", "direction_tag"
+        one_sample[0] = reference_tag
+        one_sample[1] , one_sample[2] = coordinate_x,coordinate_y
+        one_sample[3] = cluster_tag
+        one_sample[4] = direction_tag
+        #### 将这 1s 的样本加入到样本集中  ####
+        all_samples.append(one_sample)
+        i = j  # 更新 i 的值，让它指向下一秒的数据起点
+    samples_dataset = pd.DataFrame(all_samples, columns=column_tags)
+    return samples_dataset
+
 def config_coordinate(reference_tag):
     reference_point_csv = pd.read_csv(globalConfig.reference_points_coordinates_file)
     df = reference_point_csv[reference_point_csv['reference_tag'].isin([reference_tag, ])]
@@ -275,7 +322,7 @@ def config_coordinate(reference_tag):
     return x[0], y[0]  # 所以后面用到它们的值要返回 x[0] y[0]
 
 
-def csv2sample_data(referencePoint_csv, reference_tag, coordinate_x, coordinate_y, cluster_tag,direction_tag,column_tags,timeInterval):
+def csv2sample_data_onehot(referencePoint_csv, reference_tag, coordinate_x, coordinate_y, cluster_tag, direction_tag, column_tags, timeInterval):
     all_samples = []
     one_sample = []  # 记录每一个样本包括一些标签数据和多个mac的信号强度
     one_sample_mac_rssi = []  # 记录每一个样本中的多个mac的信号强度
@@ -300,7 +347,7 @@ def csv2sample_data(referencePoint_csv, reference_tag, coordinate_x, coordinate_
         if onehot_mac is None:
             continue
         else:
-            word = row.mac + '_' + str(row.rssi)
+            word = row.mac + '_' + str(row.rssi) # mac_value是mac和该mac对应的信号强度value的组合， mac_value表示一个word
             id = getWordVector.word2id_map[word]
             one_sample_mac_rssi.append(id)
 
@@ -338,11 +385,11 @@ def loadAllCsvFile2SampleSet(csv_rootdir, column_tags):
             #ibeacon_csv = pd.read_csv(ibeacon_file_path)
             # 设置 参考点标签referencePoint_tag 和 TODO (采样方向标签referencePoint_sample_direction_tag暂未设置）
             coordinate_x, coordinate_y = config_coordinate(reference_tag)
-            samples_dataset = csv2sample_data(csv, reference_tag, coordinate_x, coordinate_y, cluster_tag,
-                                              direction_tag, column_tags, globalConfig.timeInterval)
+            # samples_dataset = csv2sample_data_onehot(csv, reference_tag, coordinate_x, coordinate_y, cluster_tag,
+            #                                          direction_tag, column_tags, globalConfig.timeInterval)
+            samples_dataset = sliceAndAverage(csv,column_tags,reference_tag,cluster_tag,direction_tag,coordinate_x,coordinate_y)
             if out_file_created:
                 samples_dataset.to_csv(sampleDataSetFilePath, index=False, encoding='utf-8', header=False, mode="a") #接着在文件末尾添加数据，即以append方式写数据
-
             else:
                 samples_dataset.to_csv(sampleDataSetFilePath, index=False, encoding='utf-8')
                 out_file_created = True

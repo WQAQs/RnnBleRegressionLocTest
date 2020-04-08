@@ -66,7 +66,7 @@ def generate_word_id_wordvec_map():
         mac = row.mac
         for value in range(-40, -128, -1):
             mac_value = mac + '_' + str(value)  # mac_value是mac和该mac对应的信号强度value的组合
-            word2id_map[mac_value] = id
+            word2id_map[mac_value] = id # mac_value表示一个word
             id2word_map[str(id)] = mac_value
             mac_rssi = get_onehot(mac)
             mac_uniform_rssi = get_onehot(mac)
